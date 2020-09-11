@@ -92,9 +92,9 @@ def part_4():
 
 
 def main():
-    # part_2()
-    # part_3()
-    # part_4()
+    part_2()
+    part_3()
+    part_4()
 
 if __name__=="__main__":
     main()
