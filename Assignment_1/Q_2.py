@@ -1,6 +1,62 @@
 import numpy as np 
 import math
 from matplotlib import pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import Ridge 
+
+
+
+# toy = np.array([0, 2, 5])
+# PolynomialFeatures(4).fit_transform(toy.reshape(-1,1))
+
+
+
+# d = 20 # Maximum polynomial degree
+# You will create a grid of plots of this size (7 x 2)
+# rows = 7
+# # cols = 2
+# lambdas = [0., 1e-6, 1e-3, 1e-2, 1e-1, 1, 10] # Various penalization parameters to try
+# grid_to_predict = np.arange(0, 1, .01) # Predictions will be made on this grid
+
+# # Create training set and test set
+# # Xtrain = PolynomialFeatures(d).fit_transform(xtrain.reshape(-1,1))
+# # test_set = PolynomialFeatures(d).fit_transform(grid_to_predict.reshape(-1,1))
+
+# # fig, axs = plt.subplots(rows, cols, sharex='col', figsize=(12, 24)) # Set up plotting objects
+
+# for i, lam in enumerate(lambdas):
+#     # your code here
+#     ridge_reg = Ridge(alpha = lam) # Create regression object
+#     ridge_reg.fit(Xtrain, ytrain) # Fit on regression object
+#     ypredict_ridge = ridge_reg.predict(test_set) # Do a prediction on the test set
+    
+#     ### Provided code
+#     axs[i,0].plot(xtrain, ytrain, 's', alpha=0.4, ms=10, label="in-sample y") # Plot sample observations
+#     axs[i,0].plot(grid_to_predict, ypredict_ridge, 'k-', label=r"$\lambda =  {0}$".format(lam)) # Ridge regression prediction
+#     axs[i,0].set_ylabel('$y$') # y axis label
+#     axs[i,0].set_ylim((0, 1)) # y axis limits
+#     axs[i,0].set_xlim((0, 1)) # x axis limits
+#     axs[i,0].legend(loc='best') # legend
+    
+#     coef = ridge_reg.coef_.ravel() # Unpack the coefficients from the regression
+    
+#     axs[i,1].semilogy(np.abs(coef), ls=' ', marker='o', label=r"$\lambda =  {0}$".format(lam)) # plot coefficients
+#     axs[i,1].set_ylim((1e-04, 1e+15)) # Set y axis limits
+#     axs[i,1].set_xlim(1, 20) # Set y axis limits
+#     axs[i,1].yaxis.set_label_position("right") # Move y-axis label to right
+#     axs[i,1].set_ylabel(r'$\left|\beta_{j}\right|$') # Label y-axis
+#     axs[i,1].legend(loc='best') # Legend
+
+# # Label x axes
+# axs[-1, 0].set_xlabel("x")
+# axs[-1, 1].set_xlabel(r"$j$");
+
+
+
+
+
+
+
 
 def PolyCoefficients(x, coeffs):
     """ Returns a polynomial for ``x`` values for the ``coeffs`` provided.
@@ -45,17 +101,26 @@ def SSE(N, y_test,y_predict):
     return np.sqrt(abs(square_error))
 
 def part_2():
+    lam = 0.5
     x_train, y_train_corrupt, x_test, y_test = corrupt_sine(10, 0.1, 0, 1)
+    Xtrain = PolynomialFeatures(10).fit_transform(x_train.reshape(-1,1))
+    test_set = PolynomialFeatures(10).fit_transform(x_test.reshape(-1,1))
+    ridge_reg = Ridge(alpha = lam) # Create regression object
+    ridge_reg.fit(Xtrain, y_train_corrupt) # Fit on regression object
+    ypredict_ridge = ridge_reg.predict(test_set)
+
+
     SSEs = [0]*16
     for i in range(0,16):
-        p= poly_fitting(i, x_train, y_train_corrupt)
-        # plt.plot(train_x, PolyCoefficients(train_x, p))
-        y_predict = predict(x_test,p)
-
-        # plt.show()
-        SSEs[i] = SSE(10, y_test,y_predict)
+        Xtrain = PolynomialFeatures(i).fit_transform(x_train.reshape(-1,1))
+        test_set = PolynomialFeatures(i).fit_transform(x_test.reshape(-1,1))
+        ridge_reg = Ridge(alpha = lam) # Create regression object
+        ridge_reg.fit(Xtrain, y_train_corrupt) # Fit on regression object
+        ypredict_ridge = ridge_reg.predict(test_set)
+        # y_predict = predict(x_test,p)
+        SSEs[i] = SSE(10, y_test,ypredict_ridge)
     M_list = list(range(0,16))
-    plt.title("part_2: SSE(y_axis) v/s M(x_axis)")
+    plt.title("part_2: SSE(y_axis) v/s M(x_axis)   lambda = 0.5")
     plt.plot(M_list, SSEs)
     plt.show()
 
@@ -65,13 +130,19 @@ def part_3():
     N_list = list(range(10,1001))
     # print(len(N_list))
     SSEs = [0]*(1001-10)
+    lam = 0.5
+
     # print(len(SSEs))
     for i in range(0,len(N_list)):
+        print(i)
         x_train, y_train_corrupt, x_test, y_test = corrupt_sine(N_list[i], 0.1, 0, 1)
-        p = poly_fitting(9, x_train, y_train_corrupt)
-        y_predict = predict(x_test, p)
-        SSEs[i] = SSE(N_list[i],y_test,y_predict)
-    plt.title("part_3: SSE(y_axis) v/s N(x_axis)")
+        Xtrain = PolynomialFeatures(9).fit_transform(x_train.reshape(-1,1))
+        test_set = PolynomialFeatures(9).fit_transform(x_test.reshape(-1,1))
+        ridge_reg = Ridge(alpha = lam) # Create regression object
+        ridge_reg.fit(Xtrain, y_train_corrupt) # Fit on regression object
+        ypredict_ridge = ridge_reg.predict(test_set)
+        SSEs[i] = SSE(N_list[i],y_test,ypredict_ridge)
+    plt.title("part_3: SSE(y_axis) v/s N(x_axis)   lambda = 0.5")
     plt.plot(N_list, SSEs)
     plt.show()
 
@@ -80,21 +151,27 @@ def part_3():
 def part_4():
     # gammas = list(range(0.1:0.01:0.51))
     gammas = [i for i in np.arange(0.1,0.51,0.01)]
+    lam = 0.5
     SSEs = [0]*len(gammas)
     for i in range(0, len(gammas)):
         x_train, y_train_corrupt, x_test, y_test = corrupt_sine(100, gammas[i], 0, 1)
-        p = poly_fitting(10, x_train, y_train_corrupt)
-        y_predict = predict(x_test, p)
-        SSEs[i] = SSE(100,y_test,y_predict)
-    plt.title("part_3: SSE(y_axis) v/s gamma(x_axis)")
+        Xtrain = PolynomialFeatures(9).fit_transform(x_train.reshape(-1,1))
+        test_set = PolynomialFeatures(9).fit_transform(x_test.reshape(-1,1))
+        ridge_reg = Ridge(alpha = lam) # Create regression object
+        ridge_reg.fit(Xtrain, y_train_corrupt) # Fit on regression object
+        ypredict_ridge = ridge_reg.predict(test_set)
+        # p = poly_fitting(10, x_train, y_train_corrupt)
+        # y_predict = predict(x_test, p)
+        SSEs[i] = SSE(100,y_test,ypredict_ridge)
+    plt.title("part_3: SSE(y_axis) v/s gamma(x_axis)   lambda = 0.5")
     plt.plot(gammas, SSEs)
     plt.show()
 
 
 def main():
-    # part_2()
-    # part_3()
-    # part_4()
+    part_2()
+    part_3()
+    part_4()
 
 if __name__=="__main__":
     main()
